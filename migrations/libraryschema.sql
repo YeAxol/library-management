@@ -34,7 +34,7 @@ CREATE TABLE medium (
 
 CREATE TABLE artist (
     artistID uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    artistName varchar(255) NOT NULL
+    artistName varchar(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE track (
