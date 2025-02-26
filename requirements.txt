@@ -1,2 +1,5 @@
 flask
-psycopg[binary]
+flask[async]
+psycopg[binary,pool]
+asyncio
+dotenv
