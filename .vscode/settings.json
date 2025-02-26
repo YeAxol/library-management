@@ -1,0 +1,9 @@
+{
+    "cSpell.words": [
+        "asyncio",
+        "dotenv",
+        "psycopg",
+        "timestamptz",
+        "varchar"
+    ]
+}
