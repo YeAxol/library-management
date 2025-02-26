@@ -46,7 +46,6 @@ async def modifyArtist(conn:psycopg.AsyncConnection, artistID: str, newArtistNam
         else:
             raise ArtistNotFoundError(artistID)
 
-
 #################################################
 #            Track Table Queries                #
 #################################################
@@ -69,7 +68,7 @@ async def addMedium(conn:psycopg.AsyncConnection, mediumName: str):
             return await getMediumUUID(conn, mediumName)
         else:
             return await getMediumUUID(conn, mediumName)
-
+         
 async def removeMedium(conn:psycopg.AsyncConnection, mediumName: str):
     async with conn.cursor() as cur:
         UUID = await getMediumUUID(conn, mediumName)
@@ -87,7 +86,6 @@ async def modifyMedium(conn:psycopg.AsyncConnection, mediumID: str, newMediumNam
             await cur.execute("UPDATE medium SET mediumname = %s WHERE mediumid = %s", (newMediumName, mediumID))
         else:
             raise MediumNotFoundError(mediumID)
-
 
 #################################################
 #           Album Table Queries                #
@@ -167,14 +165,7 @@ async def modifyFirstName(conn:psycopg.AsyncConnection, userID: str, newName: st
             await cur.execute("UPDATE user SET firstname = %s WHERE userid = %s", (newName, userID))
             await conn.commit()
             return await verifyUserUUID(conn,userID) #TODO: return something useful if needed
-
-
-
-
-
-
-
-
+          
 #################################################
 #          Review_Album Table Queries           #
 #################################################
