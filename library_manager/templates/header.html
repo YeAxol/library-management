@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <img src="{{ url_for('static', filename='images/icon.png') }}" alt="Library Icon" class="header-icon">
+            <h1>Library Manager</h1>
+        </div>
+        <div class="header-right">
+            <button onclick="location.href='{{ url_for('search') }}'">Search Library</button>
+            {% if current_user.is_authenticated %}
+                <button onclick="location.href='{{ url_for('logout') }}'">Sign Out</button>
+                <button onclick="location.href='{{ url_for('review_manager') }}'">Review Manager</button>
+                {% if current_user.role == 'staff' %}
+                    <button onclick="location.href='{{ url_for('manage_library') }}'">Manage Library</button>
+                    <button onclick="location.href='{{ url_for('manage_reviews') }}'">Manage Reviews</button>
+                    <button onclick="location.href='{{ url_for('manage_other') }}'">Manage Other</button>
+                {% endif %}
+                {% if current_user.role == 'eboard' %}
+                    <button onclick="location.href='{{ url_for('review_statistics') }}'">Review Statistics</button>
+                    <button onclick="location.href='{{ url_for('manage_users') }}'">Manage Users</button>
+                {% endif %}
+            {% else %}
+                <button onclick="location.href='{{ url_for('login') }}'">Sign In</button>
+            {% endif %}
+        </div>
+    </header>
+</body>
+</html>

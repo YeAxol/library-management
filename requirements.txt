@@ -1,5 +1,6 @@
 flask
 flask[async]
+flask_login
 psycopg[binary,pool]
 asyncio
 dotenv
