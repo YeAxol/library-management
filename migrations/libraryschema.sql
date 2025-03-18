@@ -48,6 +48,12 @@ CREATE TABLE track (
     fccClean bool NOT NULL DEFAULT False
 );
 
+CREATE TABLE album_track (
+    albumID uuid REFERENCES album(albumID),
+    trackID uuid REFERENCES track(trackID),
+    PRIMARY KEY (albumID, trackID)
+);
+
 CREATE TABLE artist_track (
     artistID uuid REFERENCES artist(artistID),
     trackID uuid REFERENCES track(trackID),

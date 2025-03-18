@@ -112,33 +112,28 @@ def logout():
     return redirect(url_for('home'))
 
 ### Routes
+### Home Page / Search Library
 
 @app.route("/")
-@app.route("/home")
-def home():
-    page = int(request.args.get('page', 1))
-    title = request.args.get('', '')
+@app.route("/search")
+async def home():
+    entry = int(request.args.get('entry', 0))
+    album = request.args.get('album', '')
     artist = request.args.get('artist', '')
     genre = request.args.get('genre', '')
-    year = request.args.get('year', '')
+    track = request.args.get('track', '')
 
     conn = g.db
-    albums, has_next = await dbq.get_albums(conn, title, artist, genre, year, page)
+    albums = await dbq.get_albums(conn, album, artist, genre, track, entry)
 
-    return render_template("home.html", albums=albums, page=page, has_next=has_next)
+    return render_template("home.html", albums=albums, entry=entry)
 
+### Review Management
 
 @app.route("/review_manager")
 @login_required
 def review_manager():
     return "<p>Review Manager</p>"
-
-@app.route("/manage_library")
-@login_required
-def manage_library():
-    if current_user.role not in ['staff', 'eboard']:
-        return redirect(url_for('home'))
-    return "<p>Manage Library</p>"
 
 @app.route("/manage_reviews")
 @login_required
@@ -147,6 +142,22 @@ def manage_reviews():
         return redirect(url_for('home'))
     return "<p>Manage Reviews</p>"
 
+@app.route("/review_statistics")
+@login_required
+def review_statistics():
+    if current_user.role != 'eboard':
+        return redirect(url_for('home'))
+    return "<p>Review Statistics</p>"
+
+### Library Management
+
+@app.route("/manage_library")
+@login_required
+def manage_library():
+    if current_user.role not in ['staff', 'eboard']:
+        return redirect(url_for('home'))
+    return "<p>Manage Library</p>"
+
 @app.route("/manage_other")
 @login_required
 def manage_other():
@@ -154,12 +165,7 @@ def manage_other():
         return redirect(url_for('home'))
     return "<p>Manage Other</p>"
 
-@app.route("/review_statistics")
-@login_required
-def review_statistics():
-    if current_user.role != 'eboard':
-        return redirect(url_for('home'))
-    return "<p>Review Statistics</p>"
+### User Management
 
 @app.route("/manage_users")
 @login_required

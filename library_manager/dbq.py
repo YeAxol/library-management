@@ -1,6 +1,6 @@
 import asyncio, psycopg
 from library_manager.exceptions import *
-from classes import User
+from library_manager.classes import User
 
 async def test_db(conn: psycopg.AsyncConnection):
     async with conn.cursor() as cur:
@@ -14,44 +14,37 @@ async def test_db(conn: psycopg.AsyncConnection):
 #        Super Cool Search Functions            #
 #################################################
 
-
-
-#################################################
-#           Artist Table Queries                #
-#################################################
-
-async def getArtistUUID(conn: psycopg.AsyncConnection, artistName: str):
+#oh god, hope this works
+async def searchLibrary(conn: psycopg.AsyncConnection, album: str, artist: str, genre: str, track: str, start: int = 0, limit: int = 50):
     async with conn.cursor() as cur:
-        await cur.execute("SELECT artistid FROM artist WHERE artistname = %s", (artistName,))
-        UUID = await cur.fetchone()
-        return str(UUID[0]) if UUID else None
-
-async def addArtist(conn:psycopg.AsyncConnection, artistName: str):
-    async with conn.cursor() as cur:
-        if await getArtistUUID(conn, artistName) is None:
-            await cur.execute("INSERT INTO artist (artistName) VALUES (%s)", (artistName,))
-            await conn.commit()
-            return await getArtistUUID(conn, artistName)
-        else:
-            return await getArtistUUID(conn, artistName)
-
-async def removeArtist(conn:psycopg.AsyncConnection, artistName: str):
-    async with conn.cursor() as cur:
-        UUID = await getArtistUUID(conn, artistName)
-        if UUID is not None:
-            await cur.execute("DELETE FROM artist WHERE artistid = %s", (str(UUID[0]),))
-            await conn.commit()
-            return await getArtistUUID(conn, artistName)
-        else:
-            return ArtistNotFoundError(artistName)
-
-async def modifyArtist(conn:psycopg.AsyncConnection, artistID: str, newArtistName: str ):
-    async with conn.cursor() as cur:
-        oldname = await cur.execute("SELECT artistName FROM artist WHERE artistid = %s", (artistID,)) 
-        if oldname is not None:
-            await cur.execute("UPDATE artist SET artistname = %s WHERE artistid = %s", (newArtistName, artistID))
-        else:
-            raise ArtistNotFoundError(artistID)
+        query = """
+        SELECT DISTINCT album.albumID, album.albumName, album.genre, artist.artistName, track.trackName
+        FROM album
+        LEFT JOIN album_artist ON album.albumID = album_artist.albumID
+        LEFT JOIN artist ON album_artist.artistID = artist.artistID
+        LEFT JOIN album_track ON album.albumID = album_track.albumID
+        LEFT JOIN track ON album_track.trackID = track.trackID
+        WHERE 1=1
+        """
+        params = []
+        if album:
+            query += " AND album.albumName ILIKE %s"
+            params.append(f"%{album}%")
+        if artist:
+            query += " AND artist.artistName ILIKE %s"
+            params.append(f"%{artist}%")
+        if genre:
+            query += " AND album.genre ILIKE %s"
+            params.append(f"%{genre}%")
+        if track:
+            query += " AND track.trackName ILIKE %s"
+            params.append(f"%{track}%")
+        
+        query += " ORDER BY album.albumName ASC LIMIT %s OFFSET %s"
+        params.extend([limit, start])
+        
+        await cur.execute(query, params)
+        return await cur.fetchall()
 
 #################################################
 #            Track Table Queries                #
