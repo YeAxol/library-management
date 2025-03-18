@@ -9,6 +9,11 @@ CREATE TABLE users (
     role varchar(10) NOT NULL DEFAULT 'member'
 );
 
+CREATE TABLE invitedusers (
+    inviteID uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    email varchar(50) NOT NULL
+);
+
 CREATE TABLE review (
     reviewID uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     review text NOT NULL,

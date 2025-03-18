@@ -30,6 +30,13 @@ class UserAlreadyExistsError(Exception):
         self.userEmail = userEmail
         super().__init__(f"User with the email '{userEmail}' is already registered.")
 
+class UserAlreadyInvited(Exception):
+    """Raised when a user already exists with the email in the database"""
+    def __init__(self, userEmail: str):
+        self.userEmail = userEmail
+        super().__init__(f"User with the email '{userEmail}' is already invited.")
+
+
 class RoleNotFound(Exception):
     """Raised when a user is assigned an invalid role"""
     def __init__(self, userRole: str):

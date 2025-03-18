@@ -1,5 +1,6 @@
 import asyncio, psycopg
 from library_manager.exceptions import *
+from classes import User
 
 async def test_db(conn: psycopg.AsyncConnection):
     async with conn.cursor() as cur:
@@ -8,6 +9,12 @@ async def test_db(conn: psycopg.AsyncConnection):
         await cur.execute("SELECT * FROM artist")
         print(await cur.fetchone())
         await conn.commit()
+
+#################################################
+#        Super Cool Search Functions            #
+#################################################
+
+
 
 #################################################
 #           Artist Table Queries                #
@@ -96,8 +103,40 @@ async def modifyMedium(conn:psycopg.AsyncConnection, mediumID: str, newMediumNam
 #################################################
 
 #################################################
+#           Invite Table Queries                #
+#################################################
+
+async def getUserInvite(conn:psycopg.AsyncConnection, email:str):
+    async with conn.cursor() as cur:
+        await cur.execute("SELECT 1 FROM invitedusers WHERE email = %s", (email,))
+        return await cur.fetchone() is not None
+
+async def inviteUser(conn:psycopg.AsyncConnection, email:str):
+    async with conn.cursor as cur:
+        if await getUserInvite(conn,email) is None:
+            await cur.execute("INSERT INTO invitedusers (email) VALUES (%s)",(email,))
+            await conn.commit()
+            return await getUserInvite(conn,email)
+        else:
+            raise UserAlreadyInvited(email)
+
+async def removeInvite(conn:psycopg.AsyncConnection, email:str):
+    async with conn.cursor() as cur:
+        await cur.execute("DELETE FROM invitedusers WHERE email = %s", (email,))
+        await conn.commit()
+        return await getUserInvite(conn, email)
+
+#################################################
 #             User Table Queries                #
 #################################################
+
+async def getUser(conn: psycopg.AsyncConnection, user_id: str):
+    async with conn.cursor() as cur:
+        await cur.execute("SELECT userid, first_name, last_name, email, role FROM user WHERE userid = %s", (user_id,))
+        user_data = await cur.fetchone()
+        if user_data:
+            return User(user_data[0], user_data[1], user_data[2], user_data[3], user_data[4])
+        return None
 
 async def getUserUUID(conn:psycopg.AsyncConnection, userEmail: str):
     async with conn.cursor() as cur:
@@ -128,6 +167,7 @@ async def deleteUser(conn:psycopg.AsyncConnection, userID: str):
             await conn.commit()
             return await verifyUserUUID(conn,userID)
 
+#TODO: Might depricate bc of user class?
 async def getUserRole(conn:psycopg.AsyncConnection, userID: str):
     if await verifyUserUUID(userID) is None:
         raise UserNotFoundError(userID)
@@ -165,7 +205,7 @@ async def modifyFirstName(conn:psycopg.AsyncConnection, userID: str, newName: st
             await cur.execute("UPDATE user SET firstname = %s WHERE userid = %s", (newName, userID))
             await conn.commit()
             return await verifyUserUUID(conn,userID) #TODO: return something useful if needed
-          
+
 #################################################
 #          Review_Album Table Queries           #
 #################################################

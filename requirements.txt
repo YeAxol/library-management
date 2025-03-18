@@ -4,3 +4,4 @@ flask_login
 psycopg[binary,pool]
 asyncio
 dotenv
+python3-saml

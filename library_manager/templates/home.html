@@ -10,25 +10,69 @@
     {% include 'header.html' %}
     <main>
         <h2>Search Library</h2>
-        <form action="{{ url_for('search') }}" method="get" class="filter-form">
+        <form action="{{ url_for('home') }}" method="get" class="filter-form">
             <div class="filter-group">
-                <label for="title">Title:</label>
-                <input type="text" id="title" name="title" placeholder="Search by title">
+                <label for="album">Album:</label>
+                <input type="text" id="album" name="album" value="{{ request.args.get('album', '') }}" placeholder="Search by album">
             </div>
             <div class="filter-group">
-                <label for="author">Author:</label>
-                <input type="text" id="author" name="author" placeholder="Search by author">
+                <label for="artist">Artist:</label>
+                <input type="text" id="artist" name="artist" value="{{ request.args.get('artist', '') }}" placeholder="Search by artist">
             </div>
             <div class="filter-group">
                 <label for="genre">Genre:</label>
-                <input type="text" id="genre" name="genre" placeholder="Search by genre">
+                <input type="text" id="genre" name="genre" value="{{ request.args.get('genre', '') }}" placeholder="Search by genre">
             </div>
             <div class="filter-group">
-                <label for="year">Year:</label>
-                <input type="text" id="year" name="year" placeholder="Search by year">
+                <label for="track">Track:</label>
+                <input type="text" id="track" name="track" value="{{ request.args.get('track', '') }}" placeholder="Search by track">
             </div>
             <button type="submit">Search</button>
         </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Album Art</th>
+                    <th>Artist</th>
+                    <th>Album</th>
+                    <th>Genre</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for album in albums %}
+                <tr>
+                    <td><img src="{{ album.art_url }}" alt="Album Art" class="album-art"></td>
+                    <td>{{ album.artist }}</td>
+                    <td><a href="{{ url_for('album_detail', album_id=album.id) }}">{{ album.name }}</a></td>
+                    <td>{{ album.genre }}</td>
+                    <td>
+                        {% if current_user.is_authenticated %}
+                            {% if not album.reviewed %}
+                                <button onclick="location.href='{{ url_for('add_review', album_id=album.id) }}'">Add Review</button>
+                            {% else %}
+                                <button onclick="location.href='{{ url_for('edit_review', review_id=album.review_id) }}'">Edit Review</button>
+                            {% endif %}
+                            {% if current_user.role in ['staff', 'eboard'] %}
+                                <button onclick="location.href='{{ url_for('edit_entry', album_id=album.id) }}'">Edit Entry</button>
+                                <button onclick="location.href='{{ url_for('delete_entry', album_id=album.id) }}'">Delete Entry</button>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('home', page=page-1, title=request.args.get('title'), artist=request.args.get('artist'), genre=request.args.get('genre'), year=request.args.get('year')) }}">Previous</a>
+            {% endif %}
+            {% if has_next %}
+                <a href="{{ url_for('home', page=page+1, title=request.args.get('title'), artist=request.args.get('artist'), genre=request.args.get('genre'), year=request.args.get('year')) }}">Next</a>
+            {% endif %}
+        </div>
     </main>
 </body>
 </html>
