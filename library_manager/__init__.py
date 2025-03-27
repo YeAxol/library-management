@@ -1,21 +1,52 @@
 from urllib.parse import urlparse
-import psycopg, asyncio, os
+import psycopg, asyncio, os, requests, json
 from dotenv import load_dotenv
-from flask import Flask, g, redirect, url_for, render_template, request  # Import request here
-from flask_login import LoginManager, login_required, current_user, login_user, logout_user
+from flask import Flask, g, redirect, url_for, render_template, request, session  # Import request here
+from flask_login import LoginManager, login_required, current_user, login_user, logout_user, UserMixin
 from library_manager import dbq
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
-
+from library_manager.classes import User
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+DISCOGS_API_KEY = os.getenv("DISCOGS_API_KEY")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+#########
+### TEMP REMOVE BEFORE DEPLOY
+#########
+
+#there absolutely is a cleaner way to do this, flask-login doesn't like async 
+@app.route("/test_login_member")
+async def test_login_member():
+    conn = g.get('db', None)
+    user = await dbq.getUser(conn, "9835f995-0b30-424f-bb85-bea1c3975ff0")
+    if user:
+        login_user(user)
+    return redirect(url_for('home'))
+
+@app.route("/test_login_eboard")
+async def test_login_eboard():
+    conn = g.get('db', None)
+    user = await dbq.getUser(conn, "065b1e2b-5570-4c7e-a097-c4caddde88df")
+    if user:
+        login_user(user)
+    return redirect(url_for('home'))
+
+@app.route("/test_login_staff")
+async def test_login_staff():
+    conn = g.get('db', None)
+    user = await dbq.getUser(conn, "5be598a3-e422-472d-b5c4-53165f717b5f")
+    if user:
+        login_user(user)
+    return redirect(url_for('home'))
+
 
 
 ### DB Setup and Teardown to keep connections fresh
@@ -57,8 +88,31 @@ def prepare_flask_request(request):
 
 @login_manager.user_loader
 def load_user(user_id):
-    # Implement user loading logic here
-    return asyncio.run(dbq.getUser(g.db, user_id))
+    with psycopg.Connection.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT userid, firstname, lastname, email, role
+                FROM users
+                WHERE userid = %s
+                """,
+                (user_id,),
+            )
+            user_data = cur.fetchone()
+            print("loaduser")
+            
+            if user_data:
+                uid = user_data[0]
+                print(uid)
+                return User(
+                    str(uid),
+                    user_data[1],
+                    user_data[2],
+                    user_data[3],
+                    user_data[4],
+                )
+    return None
+
 
 @app.route("/login")
 def login():
@@ -124,7 +178,7 @@ async def home():
     track = request.args.get('track', '')
 
     conn = g.db
-    albums = await dbq.get_albums(conn, album, artist, genre, track, entry)
+    albums = await dbq.searchLibrary(conn, album, artist, genre, track, entry)
 
     return render_template("home.html", albums=albums, entry=entry)
 
@@ -151,12 +205,30 @@ def review_statistics():
 
 ### Library Management
 
-@app.route("/manage_library")
+@app.route("/add_entry")
 @login_required
-def manage_library():
+def add_entry():
     if current_user.role not in ['staff', 'eboard']:
         return redirect(url_for('home'))
-    return "<p>Manage Library</p>"
+    return "<p>Add Entry</p>"
+
+@app.route("/manage_library", methods=['GET', 'POST'])
+@login_required
+async def manage_library():
+    if current_user.role not in ['staff', 'eboard']:
+        return redirect(url_for('home'))
+
+    album_uuid = request.args.get('album_uuid', None)
+    album_data = None
+
+    if album_uuid:
+        conn = g.db
+        album_data = await dbq.getAlbum(conn, album_uuid)
+        if not album_data:
+            return redirect(url_for('manage_library'))
+
+    return render_template("manage_entries.html", album_data=album_data)
+
 
 @app.route("/manage_other")
 @login_required
@@ -165,11 +237,60 @@ def manage_other():
         return redirect(url_for('home'))
     return "<p>Manage Other</p>"
 
+def fetch_album_by_upc(upc):
+    """
+    Queries the Discogs API for album information based on the provided UPC.
+    Returns a dictionary with album data or None if no results were found.
+    """
+    if not upc or not DISCOGS_API_KEY:
+        return None
+
+    api_url = f"https://api.discogs.com/database/search?upc={upc}&token={DISCOGS_API_KEY}"
+    response = requests.get(api_url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if "results" in data and data["results"]:
+            return data["results"][0]  # Return the first result
+    return None
+
+@app.route("/fetch_upc", methods=["POST"])
+def fetch_upc():
+    upc = request.form.get("upc")
+    album_data = fetch_album_by_upc(upc)
+    if album_data:
+        # Process album_data as needed
+        pass
+    return redirect(url_for("home"))
+
+
 ### User Management
 
 @app.route("/manage_users")
 @login_required
-def manage_users():
+async def manage_users():
     if current_user.role != 'eboard':
         return redirect(url_for('home'))
-    return "<p>Manage Users</p>"
+    conn = g.db
+    users = await dbq.getAllUsers(conn)
+    return render_template("user_manager.html", users=users)
+
+@app.route("/update_users", methods=['POST'])
+@login_required
+async def update_users():
+    if current_user.role != 'eboard':
+        return redirect(url_for('home'))
+    conn = g.db
+    if request.form.get("invite_email"):
+        email = request.form.get("invite_email")
+        await dbq.inviteUser(conn,email)
+    elif request.form.get("deactivate"):
+        uid = request.form.get("deactivate")
+        email = await dbq.getUserEmail(conn,uid)
+        await dbq.removeInvite(conn,email)
+    elif request.form.get("changed_roles"):
+        changed_roles = request.form.get("changed_roles")
+        changed_roles_dict = json.loads(changed_roles)
+        for uid, new_role in changed_roles_dict.items():
+            await dbq.setUserRole(conn, uid, new_role)
+    return redirect(url_for("manage_users"))

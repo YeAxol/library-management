@@ -78,3 +78,6 @@ CREATE TABLE album_medium (
     mediumID uuid REFERENCES medium(mediumID),
     PRIMARY KEY (mediumID, albumID)
 );
+
+CREATE USER library WITH PASSWORD 'library';
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO library;

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h2>User Manager</h2>
+
+        <!-- Invite New User -->
+        <form action="{{ url_for('update_users') }}" method="post">
+            <label for="invite-email">Invite New User (Email):</label>
+            <input type="email" id="invite-email" name="invite_email" placeholder="Enter user email" required>
+            <button type="submit">Invite</button>
+        </form>
+
+        <hr>
+
+        <!-- Existing Users Management -->
+        <form id="user-management-form" action="{{ url_for('update_users') }}" method="post" onsubmit="return submitChangedRoles()">
+            <table>
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Deactivate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user[0] }}</td> <!-- First Name -->
+                        <td>{{ user[1] }}</td> <!-- Last Name -->
+                        <td>{{ user[2] }}</td> <!-- Email -->
+                        <td>
+                            <select name="role_{{ user[4] }}" data-user-id="{{ user[4] }}" data-original-role="{{ user[3] }}" onchange="trackRoleChange(this)">
+                                <option value="member" {% if user[3] == "member" %}selected{% endif %}>Member</option>
+                                <option value="staff" {% if user[3] == "staff" %}selected{% endif %}>Staff</option>
+                                <option value="eboard" {% if user[3] == "eboard" %}selected{% endif %}>E-Board</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="submit" name="deactivate" value="{{ user[4] }}">Deactivate</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <input type="hidden" id="changed-roles" name="changed_roles" value="">
+            <button type="submit">Save Changes</button>
+        </form>
+    </main>
+
+    <script>
+        const changedRoles = {};
+
+        function trackRoleChange(selectElement) {
+            const userId = selectElement.getAttribute('data-user-id');
+            const originalRole = selectElement.getAttribute('data-original-role');
+            const newRole = selectElement.value;
+
+            if (newRole !== originalRole) {
+                changedRoles[userId] = newRole;
+            } else {
+                delete changedRoles[userId];
+            }
+        }
+
+        function submitChangedRoles() {
+            const changedRolesInput = document.getElementById('changed-roles');
+            changedRolesInput.value = JSON.stringify(changedRoles);
+
+            // If no roles were changed, prevent form submission
+            if (Object.keys(changedRoles).length === 0) {
+                alert("No changes to save.");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>

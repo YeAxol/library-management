@@ -10,7 +10,7 @@
     {% include 'header.html' %}
     <main>
         <h2>Search Library</h2>
-        <form action="{{ url_for('search') }}" method="get" class="filter-form">
+        <form action="{{ url_for('home') }}" method="get" class="filter-form">
             <div class="filter-group">
                 <label for="album">Album:</label>
                 <input type="text" id="album" name="album" value="{{ request.args.get('album', '') }}" placeholder="Search by album">
@@ -66,7 +66,7 @@
         </table>
 
         <div class="pagination">
-            {% if page > 49 %}
+            {% if entry > 49 %}
                 <a href="{{ url_for('home', entry=entry-50, album=request.args.get('album'), artist=request.args.get('artist'), genre=request.args.get('genre'), track=request.args.get('track')) }}">Previous</a>
             {% endif %}
             {% if has_next %}

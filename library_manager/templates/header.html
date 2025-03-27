@@ -11,13 +11,14 @@
         <div class="header-left">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="WITR Library" class="header-icon">
             <h1>Library Manager</h1>
+            <p>Role: {{ current_user.role }}</p>
         </div>
         <div class="header-right">
-            <button onclick="location.href='{{ url_for('search') }}'">Search Library</button>
+            <!-- <button onclick="location.href='{{ url_for('home') }}'">Search Library</button> -->
             {% if current_user.is_authenticated %}
                 <button onclick="location.href='{{ url_for('logout') }}'">Sign Out</button>
                 <button onclick="location.href='{{ url_for('review_manager') }}'">Review Manager</button>
-                {% if current_user.role == 'staff' %}
+                {% if current_user.role == 'staff' or 'eboard' %}
                     <button onclick="location.href='{{ url_for('manage_library') }}'">Manage Library</button>
                     <button onclick="location.href='{{ url_for('manage_reviews') }}'">Manage Reviews</button>
                     <button onclick="location.href='{{ url_for('manage_other') }}'">Manage Other</button>
