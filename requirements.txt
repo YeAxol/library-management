@@ -7,3 +7,4 @@ dotenv
 python3-saml
 lxml==4.9.3
 xmlsec==1.3.13
+python3-discogs-client

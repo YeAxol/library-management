@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Entries</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h2>Album Details</h2>
+        <div style="display: flex; gap: 2rem; align-items: flex-start;">
+            <!-- Left: Album details and track list -->
+            <div style="flex: 2; min-width: 350px;">
+                <div class="album-details">
+                    <img src="{{ album.get_image() }}" alt="Album Art" class="album-art" width="300" height="300" style="display: block; margin-bottom: 10px;">
+                    <h3>{{ album.get_album_name() }}</h3>
+                    <p><strong>Album Shortcode:</strong> {{ album.get_shortcode() }}</p>
+                    <p><strong>Artist:</strong> {{ ', '.join(album.get_artist_name()) if album else '' }}</p>
+                    <p><strong>Release Year:</strong> {{ album.get_release_date() }}</p>
+                    <p><strong>Genre:</strong> {{ album.get_genre() }}</p>
+                    <p><strong>Mediums:</strong> {{ ', '.join(album.get_mediums()) if album else '' }}</p>
+                    {% if current_user.is_authenticated %}
+                    {% endif %}
+                        {% if not album.reviewed %}
+                            <button onclick="location.href='{{ url_for('review_form', album_uuid=album.get_album_id()) }}'">Add Review</button>
+                        {% else %}
+                            <button onclick="location.href='{{ url_for('review_form', album_uuid=album.get_album_id() , edit="True") }}'">Edit Review</button>
+
+                        {% endif %}
+                        {% if current_user.role in ['cdnerd', 'staff', 'eboard'] %}
+                        {% endif %}
+                            <button onclick="location.href='{{ url_for('manage_library', album_uuid=album.get_album_id()) }}'">Edit Entry</button>
+                </div>
+                <div class="track-list">
+                    <h4>Track List</h4>
+                    <table id="track-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Artist(s)</th>
+                                <th>Duration</th>
+                                <th>FCC Clean</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for track in album.get_tracks() %}
+                                <tr>
+                                    <td>{{ track[0] }}</td>
+                                    <td>{{ ', '.join(track[1]) }}</td>
+                                    <td>{% if track[2] != False %} {{ track[2] }} {% else %} 0:00 {% endif %}</td>
+                                    <td><input type="checkbox" disabled="disabled" {% if track[3] %}checked="checked"{% endif %}></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Right: Review table -->
+            <div style="flex: 1; min-width: 300px;">
+                <h4>Reviews</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th>Reviewer</th>
+                            <th>Date</th>
+                            <th>Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if reviews %}
+                            {% for review in reviews %}
+                                <tr>
+                                    <td>{{ review[4] }} {{ review[5] }}</td>
+                                    <td>{{ review[3].strftime('%Y-%m-%d') if review[3] else '' }}</td>
+                                    <td style="white-space: pre-line;">{{ review[1] }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3">No reviews yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -20,6 +20,7 @@ CREATE TABLE review (
     userID uuid NOT NULL,
     reviewDate timestamptz NOT NULL DEFAULT now(),
     hidden bool NOT NULL DEFAULT False,
+    adminhide bool NOT NULL DEFAULT False,
     CONSTRAINT USERS_USERID_FK FOREIGN KEY (userID) REFERENCES users(userID)
 );
 
@@ -28,8 +29,8 @@ CREATE TABLE album (
     albumName varchar(255) NOT NULL,
     albumShort varchar(5) NOT NULL,
     genre varchar(25) NOT NULL,
-    picture text,
-    releaseDate timestamptz
+    picture bytea,
+    releaseDate int
 );
 
 CREATE TABLE medium (
@@ -45,6 +46,7 @@ CREATE TABLE artist (
 CREATE TABLE track (
     trackID uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     trackName varchar(255) NOT NULL,
+    trackDuration varchar(10) NOT NULL,
     fccClean bool NOT NULL DEFAULT False
 );
 
@@ -73,11 +75,17 @@ CREATE TABLE review_album (
 );
 
 CREATE TABLE album_medium (
-    album_UPC varchar(20),
+    albumUPC varchar(24),
     albumID uuid REFERENCES album(albumID),
     mediumID uuid REFERENCES medium(mediumID),
     PRIMARY KEY (mediumID, albumID)
 );
+
+CREATE TABLE parameters (
+    key varchar(50) PRIMARY KEY,
+    value text NOT NULL
+);
+
 
 CREATE USER library WITH PASSWORD 'library';
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO library;

@@ -116,3 +116,7 @@ main {
 .filter-form button:hover {
     background-color: #0056b3;
 }
+
+a, a:visited, a:hover, a:active {
+  color: inherit;
+}

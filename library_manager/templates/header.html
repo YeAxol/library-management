@@ -9,19 +9,21 @@
 <body>
     <header>
         <div class="header-left">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="WITR Library" class="header-icon">
-            <h1>Library Manager</h1>
-            <p>Role: {{ current_user.role }}</p>
+            <a href="/">  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="WITR Library" class="header-icon"></a>
+            <a href="/" style="text-decoration: none;"> <h1>Library Manager</h1></a>
+{#            <p>Role: {{ current_user.role }}</p>#}
         </div>
         <div class="header-right">
             <!-- <button onclick="location.href='{{ url_for('home') }}'">Search Library</button> -->
             {% if current_user.is_authenticated %}
                 <button onclick="location.href='{{ url_for('logout') }}'">Sign Out</button>
-                <button onclick="location.href='{{ url_for('review_manager') }}'">Review Manager</button>
+                <button onclick="location.href='{{ url_for('my_reviews') }}'">My Reviews</button>
+                {% if current_user.role == 'cdnerd' or 'staff' or 'eboard'  %}
+                    <button onclick="location.href='{{ url_for('manage_library') }}'">Add Library Entry</button>
+                {% endif %}
                 {% if current_user.role == 'staff' or 'eboard' %}
-                    <button onclick="location.href='{{ url_for('manage_library') }}'">Manage Library</button>
-                    <button onclick="location.href='{{ url_for('manage_reviews') }}'">Manage Reviews</button>
-                    <button onclick="location.href='{{ url_for('manage_other') }}'">Manage Other</button>
+                    <button onclick="location.href='{{ url_for('reviews_admin') }}'">Review Admin</button>
+                    <button onclick="location.href='{{ url_for('library_parameters') }}'">Manage Parameters</button>
                 {% endif %}
                 {% if current_user.role == 'eboard' %}
                     <button onclick="location.href='{{ url_for('review_statistics') }}'">Review Statistics</button>

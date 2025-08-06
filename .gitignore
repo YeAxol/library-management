@@ -8,6 +8,7 @@ __pycache__/
 
 .libraryenv
 .vscode/
+priv/
 
 # Distribution / packaging
 saml/

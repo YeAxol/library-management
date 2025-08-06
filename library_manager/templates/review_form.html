@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Review</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h2>Review Album</h2>
+        <div style="display: flex; gap: 2rem;">
+            <!-- Album details (left) -->
+            <div style="flex: 1; min-width: 300px;">
+                <img src="{{ album.get_image() }}" alt="Album Art" class="album-art" width="250" height="250" style="display: block; margin-bottom: 10px;">
+                <h3>{{ album.get_album_name() }}</h3>
+                <p><strong>Artist:</strong> {{ ', '.join(album.get_artist_name()) if album else '' }}</p>
+                <p><strong>Release Year:</strong> {{ album.get_release_date() }}</p>
+                <p><strong>Genre:</strong> {{ album.get_genre() }}</p>
+                <table id="track-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Artist(s)</th>
+                            <th>Duration</th>
+                            <th>FCC Clean</th>
+                        </tr>
+                    </thead>
+                        <tbody>
+                            {% for track in album.get_tracks() %}
+                                <tr>
+                                    <td>{{ track[0] }}</td>
+                                    <td>{{ ', '.join(track[1]) }}</td>
+                                    <td>{% if track[2] != False %} {{ track[2] }} {% else %} 0:00 {% endif %}</td>
+                                    <td><input type="checkbox" disabled="disabled" {% if track[3] %}checked= "checked" {% endif %}></td>
+                                </tr>
+                       {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Review form (right) -->
+            <form method="post" style="flex: 2; display: flex; flex-direction: column;">
+                <label for="review"><strong>Your Review:</strong></label>
+                <textarea id="review" name="review" rows="12" required>{{ review_text or '' }}</textarea>
+                <div style="margin-top: 1rem;">
+                    {% if is_edit %}
+                        <button type="submit" name="action" value="update">Update Review</button>
+                    {% else %}
+                        <button type="submit" name="action" value="add">Add Review</button>
+                        <button type="submit" name="action" value="draft">Save Draft</button>
+                    {% endif %}
+                    <button type="button" onclick="window.location.href='{{ url_for('album', album_uuid=album.get_album_id()) }}'">Cancel</button>
+                </div>
+                <div style="margin-top: 2rem; background: #f8f8f8; padding: 1rem; border-radius: 6px;">
+                    <strong>Review Guidelines:</strong>
+                    <div style="white-space: pre-line;">{{ review_guidelines }}</div>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

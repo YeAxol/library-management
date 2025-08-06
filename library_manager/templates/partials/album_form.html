@@ -1,0 +1,106 @@
+<form id="entry-form" enctype="multipart/form-data" autocomplete="off">
+                <div class="left-table">
+                    {% if album_entry and album_entry.get_album_id() %}
+                        <input type="hidden" name="album_uuid" value="{{ album_entry.get_album_id() }}">
+                    {% endif %}
+                    <div class="form-group">
+                        <label for="upc">UPC:</label>
+                        <input type="text" id="upc" name="upc" placeholder="Enter UPC" value="{{ album_entry.get_upc() if album_entry else '' }}">
+                        <button type="button" id="fetch-upc">Fetch</button>
+                    </div>
+                    {% if not album_entry %}
+                        <div class="form-group">
+                            <label for="discogsrelease">Discogs Release ID:</label>
+                            <input type="text" id="discogsrelease" name="discogsrelease" placeholder="Enter Discogs Release ID" value="">
+                            <button type="button" id="fetch-discogs">Fetch</button>
+                        </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label for="album-name">Album Name:</label>
+                        <input type="text" id="album-name" name="album_name" placeholder="Enter album name" value="{{ album_entry.get_album_name() if album_entry else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="artist-names">Artist Name(s):</label>
+                        <input type="text" id="artist-names" name="artist_names" placeholder="Enter artist names, comma delimited" value="{{ ', '.join(album_entry.get_artist_name()) if album_entry else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="genre">Genre:</label>
+                        <input type="text" id="genre" name="genre" placeholder="Enter genre" value="{{ album_entry.get_genre() if album_entry else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="shortcode">Shortcode:</label>
+                        <input type="text" id="shortcode" name="shortcode" placeholder="Enter shortcode" value="{{ album_entry.get_shortcode() if album_entry else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="release-date">Release Date:</label>
+                        <input type="text" id="release-date" name="release_date" value="{{ album_entry.get_release_date() if album_entry else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="mediums">Medium(s):</label>
+                        <input type="text" id="mediums" name="mediums" placeholder="Enter mediums, comma delimited" value="{{ ', '.join(album_entry.get_mediums()) if album_entry else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="image">Upload Image:</label>
+                        <input type="file" id="image" name="image">
+                    </div>
+                    {% set image_src = "" %}
+                    {% if album_entry %}
+                        {% if album_entry.get_image() %}
+                            {% set img = album_entry.get_image() %}
+                            {% if img.startswith("data:image") %}
+                                {% set image_src = img %}
+                            {% elif img|length > 100 and not img.startswith("http") %}
+                                {# Assume it's base64 without prefix #}
+                                {% set image_src = "data:image/jpeg;base64," ~ img %}
+                            {% else %}
+                                {% set image_src = img %}
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                    <div class="form-group">
+                        <img id="album-image"
+                            src="{{ image_src }}"
+                            alt="Album Image"
+                            style="max-width: 300px; display: {{ 'block' if image_src else 'none' }}; margin-top: 10px;">
+                    </div>
+                    <div class="form-group">
+                        {% if is_edit %}
+                            <button type="button" id="update-button">Update Entry</button>
+                            {% if current_user.role in ['staff', 'eboard'] %}
+                                <button type="button" id="delete-button">Delete Entry</button>
+                            {% endif %}
+                            <button type="button" id="cancel-button">Cancel</button>
+                        {% else %}
+                            <button type="button" id="submit-button">Add Entry</button>
+                            <button type="button" id="cancel-button">Cancel</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="right-table">
+                    <h3>Track Table</h3>
+                    <table id="track-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Artist(s)</th>
+                                <th>Duration</th>
+                                <th>FCC Clean</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if album_entry %}
+                                {% for track in album_entry.tracks %}
+                                    <tr>
+                                        <td><input type="text" name="track_name[]" placeholder="Track Name" value="{{ track[0] }}"></td>
+                                        <td><input type="text" name="track_artists[]" placeholder="Artist(s)" value="{{ ', '.join(track[1]) }}"></td>
+                                        <td><input type="text" name="track_duration[]" placeholder="Duration" value="{{ track[2] }}"></td>
+                                        <td><input type="checkbox" name="track_fcc_clean[]" {% if track[3] == True %}checked{% endif %}></td>
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    <button type="button" id="add-track">Add Track</button>
+                    <button type="button" id="remove-track">Remove Track</button>
+                </div>
+</form>
