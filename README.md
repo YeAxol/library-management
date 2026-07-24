@@ -1,3 +1,3 @@
 # Library Managment
 
-New library managment solution for WITR. Finally time to replace the vinyl bible.
+An open source simple library manager for small organizations and individuals, focused on physical media. 
